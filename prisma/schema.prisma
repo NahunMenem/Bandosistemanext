@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id       Int     @id @default(autoincrement())
+  username String  @unique @db.VarChar(64)
+  password String  @map("password_hash") @db.VarChar(128)
+  nombre   String? @db.VarChar(100)
+
+  @@map("usuario")
+}
+
+model Cliente {
+  id               Int     @id @default(autoincrement())
+  nombre           String? @db.VarChar(120)
+  domicilio        String? @db.VarChar(120)
+  localidad        String? @db.VarChar(100)
+  documento        String? @db.VarChar(20)
+  telefono         String? @db.VarChar(20)
+  ingresos         Decimal? @db.Decimal(12, 2)
+  lugar_trabajo    String? @db.VarChar(120)
+  monto_autorizado Decimal? @db.Decimal(12, 2)
+
+  garante Garante[]
+  ventas  Venta[]
+  pagos   PagoCliente[]
+
+  @@map("cliente")
+}
+
+model Garante {
+  id            Int      @id @default(autoincrement())
+  nombre        String? @db.VarChar(120)
+  domicilio     String? @db.VarChar(120)
+  localidad     String? @db.VarChar(100)
+  documento     String? @db.VarChar(20)
+  telefono      String? @db.VarChar(20)
+  ingresos      Decimal? @db.Decimal(12, 2)
+  lugar_trabajo String? @db.VarChar(120)
+  cliente_id    Int?
+
+  cliente Cliente? @relation(fields: [cliente_id], references: [id], onDelete: Cascade)
+
+  @@map("garante")
+}
+
+model Venta {
+  id               Int      @id @default(autoincrement())
+  cliente_id       Int?
+  fecha            DateTime? @db.Timestamp(6)
+  total            Decimal? @db.Decimal(10, 2)
+  pago_a_cuenta    Decimal? @db.Decimal(10, 2)
+  saldo_resultante Decimal? @db.Decimal(10, 2)
+  descripcion      String?  @db.Text
+  metodo_pago      String?  @db.VarChar(50)
+
+  cliente Cliente?    @relation(fields: [cliente_id], references: [id])
+  items   VentaItem[]
+
+  @@map("ventas2")
+}
+
+model VentaItem {
+  id              Int      @id @default(autoincrement())
+  venta_id        Int?
+  cantidad        Int?
+  descripcion     String?
+  precio_unitario Decimal? @db.Decimal(10, 2)
+  total           Decimal? @db.Decimal(10, 2)
+
+  venta Venta? @relation(fields: [venta_id], references: [id])
+
+  @@map("venta_items")
+}
+
+model PagoCliente {
+  id          Int       @id @default(autoincrement())
+  cliente_id  Int
+  fecha       DateTime? @db.Timestamp(6)
+  monto       Float
+  metodo_pago String?   @db.VarChar(50)
+
+  cliente Cliente @relation(fields: [cliente_id], references: [id])
+
+  @@map("pagos_clientes")
+}
