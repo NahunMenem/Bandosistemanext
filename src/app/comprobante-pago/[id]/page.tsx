@@ -9,6 +9,7 @@ interface PagoData {
   fecha: string;
   monto: number;
   metodo_pago: string;
+  saldo_posterior: number;
   cliente: {
     id: number;
     nombre: string;
@@ -27,20 +28,27 @@ export default function ComprobantePagoPage() {
   useEffect(() => {
     fetch(`/api/pagos/${id}`)
       .then((r) => r.json())
-      .then((d) => { setData(d); setLoading(false); });
+      .then((d) => {
+        setData(d);
+        setLoading(false);
+      });
   }, [id]);
 
-  if (loading) return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center text-gray-400">
-      Cargando comprobante...
-    </div>
-  );
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center text-gray-400">
+        Cargando comprobante...
+      </div>
+    );
+  }
 
-  if (!data) return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center text-gray-400">
-      Comprobante no encontrado
-    </div>
-  );
+  if (!data) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center text-gray-400">
+        Comprobante no encontrado
+      </div>
+    );
+  }
 
   const fmtPeso = (n: number) =>
     n.toLocaleString('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 2 });
@@ -50,7 +58,7 @@ export default function ComprobantePagoPage() {
 
   const shareWhatsApp = () => {
     const msg = encodeURIComponent(
-      `Comprobante de pago - Rodeo Calzados\nCliente: ${data.cliente.nombre}\nMonto abonado: ${fmtPeso(data.monto)}\nMétodo: ${data.metodo_pago}\nFecha: ${fmtFecha(data.fecha)}`
+      `Comprobante de pago - Rodeo Calzados\nCliente: ${data.cliente.nombre}\nMonto abonado: ${fmtPeso(data.monto)}\nSaldo tras pago: ${fmtPeso(data.saldo_posterior)}\nMétodo: ${data.metodo_pago}\nFecha: ${fmtFecha(data.fecha)}`
     );
     window.open(`https://wa.me/?text=${msg}`, '_blank');
   };
@@ -58,7 +66,6 @@ export default function ComprobantePagoPage() {
   return (
     <div className="min-h-screen bg-gray-100 py-8 px-4">
       <div className="max-w-md mx-auto bg-white rounded-2xl shadow-lg overflow-hidden print:shadow-none print:rounded-none">
-        {/* Header */}
         <div className="bg-green-700 text-white px-6 py-5">
           <div className="flex items-center gap-3 mb-1">
             <ShoppingBag size={22} />
@@ -68,33 +75,36 @@ export default function ComprobantePagoPage() {
           <p className="text-green-200 text-sm">{fmtFecha(data.fecha)}</p>
         </div>
 
-        {/* Client info */}
         <div className="px-6 py-4 border-b border-gray-100">
           <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">Cliente</p>
           <p className="font-semibold text-gray-900">{data.cliente.nombre}</p>
           {data.cliente.documento && <p className="text-sm text-gray-600">DNI: {data.cliente.documento}</p>}
           {data.cliente.domicilio && (
             <p className="text-sm text-gray-600">
-              {data.cliente.domicilio}{data.cliente.localidad ? `, ${data.cliente.localidad}` : ''}
+              {data.cliente.domicilio}
+              {data.cliente.localidad ? `, ${data.cliente.localidad}` : ''}
             </p>
           )}
         </div>
 
-        {/* Payment details */}
         <div className="px-6 py-5 space-y-3">
           <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
             <p className="text-sm text-green-700 mb-1">Monto abonado</p>
             <p className="text-3xl font-bold text-green-800">{fmtPeso(data.monto)}</p>
             <p className="text-sm text-green-600 mt-1 capitalize">Método: {data.metodo_pago}</p>
           </div>
+          <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-center">
+            <p className="text-sm text-gray-600 mb-1">Saldo tras pago</p>
+            <p className={`text-2xl font-bold ${data.saldo_posterior > 0 ? 'text-red-600' : 'text-green-700'}`}>
+              {fmtPeso(data.saldo_posterior)}
+            </p>
+          </div>
         </div>
 
-        {/* Footer */}
         <div className="px-6 pb-4 text-center">
           <p className="text-xs text-gray-400">Gracias por su pago</p>
         </div>
 
-        {/* Actions */}
         <div className="px-6 py-4 border-t border-gray-100 flex gap-3 print:hidden">
           <button
             onClick={() => window.print()}
