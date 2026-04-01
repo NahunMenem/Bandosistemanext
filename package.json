@@ -4,12 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "node -e \"require('fs').rmSync('.next',{ recursive: true, force: true })\" && next build",
+    "build": "npx prisma generate && node -e \"require('fs').rmSync('.next',{ recursive: true, force: true })\" && next build",
     "start": "next start",
     "lint": "next lint",
     "db:push": "prisma db push",
     "db:generate": "prisma generate",
-    "db:seed": "npx ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts"
+    "db:seed": "npx ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "next": "14.2.0",
