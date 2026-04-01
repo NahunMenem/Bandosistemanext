@@ -22,13 +22,21 @@ export const authOptions: NextAuthOptions = {
         if (!credentials?.username || !credentials?.password) return null;
 
         const username = credentials.username.trim();
+        console.log('[auth] authorize:start', { username, env: process.env.VERCEL_ENV ?? process.env.NODE_ENV });
 
-        const user = await prisma.usuario.findUnique({
-          where: { username },
-        });
+        let user = null;
+        try {
+          user = await prisma.usuario.findUnique({
+            where: { username },
+          });
+          console.log('[auth] usuario:lookup', { found: !!user, username });
+        } catch (error) {
+          console.error('[auth] usuario:lookup:error', error);
+        }
 
         if (user) {
           const isValid = await verifyPassword(credentials.password, user.password);
+          console.log('[auth] usuario:password-check', { username, isValid });
           if (!isValid) return null;
 
           return {
@@ -38,15 +46,27 @@ export const authOptions: NextAuthOptions = {
           };
         }
 
-        const legacyUsers = await prisma.$queryRawUnsafe<LegacyUserRow[]>(
-          'select id, username, password, role from usuarios where lower(username) = lower($1) limit 1',
-          username,
-        );
+        let legacyUsers: LegacyUserRow[] = [];
+        try {
+          legacyUsers = await prisma.$queryRawUnsafe<LegacyUserRow[]>(
+            'select id, username, password, role from usuarios where lower(username) = lower($1) limit 1',
+            username,
+          );
+          console.log('[auth] usuarios:lookup', { found: legacyUsers.length > 0, username });
+        } catch (error) {
+          console.error('[auth] usuarios:lookup:error', error);
+        }
         const legacyUser = legacyUsers[0];
 
         if (!legacyUser) return null;
 
         const isLegacyValid = await verifyPassword(credentials.password, legacyUser.password);
+        console.log('[auth] usuarios:password-check', {
+          username,
+          matchedUser: legacyUser.username,
+          passwordLength: legacyUser.password?.length ?? 0,
+          isLegacyValid,
+        });
         if (!isLegacyValid) return null;
 
         return {
