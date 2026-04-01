@@ -64,7 +64,6 @@ export default function ClientesPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
@@ -82,7 +81,6 @@ export default function ClientesPage() {
         </button>
       </div>
 
-      {/* Search */}
       <div className="relative">
         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
         <input
@@ -94,7 +92,6 @@ export default function ClientesPage() {
         />
       </div>
 
-      {/* Table */}
       {loading ? (
         <div className="text-center text-gray-400 py-12">Cargando...</div>
       ) : filtered.length === 0 ? (
@@ -190,7 +187,6 @@ export default function ClientesPage() {
         </div>
       )}
 
-      {/* New client modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/60 flex items-start justify-center z-50 p-4 overflow-y-auto">
           <div className="bg-gray-800 rounded-2xl w-full max-w-2xl my-8">
@@ -266,7 +262,6 @@ export default function ClientesPage() {
         </div>
       )}
 
-      {/* Delete confirm */}
       {deleteId && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
           <div className="bg-gray-800 rounded-xl p-6 max-w-sm w-full border border-gray-700">
