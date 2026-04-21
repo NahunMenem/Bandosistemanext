@@ -21,7 +21,7 @@ model Cliente {
   nombre           String? @db.VarChar(120)
   domicilio        String? @db.VarChar(120)
   localidad        String? @db.VarChar(100)
-  documento        String? @db.VarChar(20)
+  documento        String? @unique @db.VarChar(20)
   telefono         String? @db.VarChar(20)
   ingresos         Decimal? @db.Decimal(12, 2)
   lugar_trabajo    String? @db.VarChar(120)

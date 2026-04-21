@@ -4,6 +4,18 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { toNumber } from '@/lib/db-normalizers';
 
+function cleanText(value: unknown) {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+function parseOptionalDecimal(value: unknown) {
+  const cleanValue = cleanText(value);
+  if (!cleanValue) return null;
+
+  const parsed = Number(cleanValue);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
@@ -38,18 +50,42 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   const body = await req.json();
   const { garante: garanteData, ...clienteData } = body;
   const id = parseInt(params.id);
+  const nombre = cleanText(clienteData.nombre);
+  const documento = cleanText(clienteData.documento);
+
+  if (!nombre || !documento) {
+    return NextResponse.json(
+      { error: 'Nombre y documento son obligatorios.' },
+      { status: 400 }
+    );
+  }
+
+  const clienteExistente = await prisma.cliente.findFirst({
+    where: {
+      documento,
+      NOT: { id },
+    },
+    select: { id: true, nombre: true },
+  });
+
+  if (clienteExistente) {
+    return NextResponse.json(
+      { error: `Ya existe un cliente con el documento ${documento}: ${clienteExistente.nombre || 'sin nombre'}.` },
+      { status: 409 }
+    );
+  }
 
   const cliente = await prisma.cliente.update({
     where: { id },
     data: {
-      nombre: clienteData.nombre,
-      domicilio: clienteData.domicilio,
-      localidad: clienteData.localidad,
-      documento: clienteData.documento,
-      telefono: clienteData.telefono,
-      ingresos: clienteData.ingresos ? parseFloat(clienteData.ingresos) : null,
-      lugar_trabajo: clienteData.lugar_trabajo,
-      monto_autorizado: clienteData.monto_autorizado ? parseFloat(clienteData.monto_autorizado) : null,
+      nombre,
+      domicilio: cleanText(clienteData.domicilio) || null,
+      localidad: cleanText(clienteData.localidad) || null,
+      documento,
+      telefono: cleanText(clienteData.telefono) || null,
+      ingresos: parseOptionalDecimal(clienteData.ingresos),
+      lugar_trabajo: cleanText(clienteData.lugar_trabajo) || null,
+      monto_autorizado: parseOptionalDecimal(clienteData.monto_autorizado),
     },
     include: { garante: true },
   });
@@ -63,23 +99,23 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     await prisma.garante.upsert({
       where: { id: garanteExistente?.id ?? -1 },
       update: {
-        nombre: garanteData.nombre,
-        domicilio: garanteData.domicilio,
-        localidad: garanteData.localidad,
-        documento: garanteData.documento,
-        telefono: garanteData.telefono,
-        ingresos: garanteData.ingresos ? parseFloat(garanteData.ingresos) : null,
-        lugar_trabajo: garanteData.lugar_trabajo,
+        nombre: cleanText(garanteData.nombre) || null,
+        domicilio: cleanText(garanteData.domicilio) || null,
+        localidad: cleanText(garanteData.localidad) || null,
+        documento: cleanText(garanteData.documento) || null,
+        telefono: cleanText(garanteData.telefono) || null,
+        ingresos: parseOptionalDecimal(garanteData.ingresos),
+        lugar_trabajo: cleanText(garanteData.lugar_trabajo) || null,
       },
       create: {
         cliente_id: id,
-        nombre: garanteData.nombre,
-        domicilio: garanteData.domicilio,
-        localidad: garanteData.localidad,
-        documento: garanteData.documento,
-        telefono: garanteData.telefono,
-        ingresos: garanteData.ingresos ? parseFloat(garanteData.ingresos) : null,
-        lugar_trabajo: garanteData.lugar_trabajo,
+        nombre: cleanText(garanteData.nombre) || null,
+        domicilio: cleanText(garanteData.domicilio) || null,
+        localidad: cleanText(garanteData.localidad) || null,
+        documento: cleanText(garanteData.documento) || null,
+        telefono: cleanText(garanteData.telefono) || null,
+        ingresos: parseOptionalDecimal(garanteData.ingresos),
+        lugar_trabajo: cleanText(garanteData.lugar_trabajo) || null,
       },
     });
   }

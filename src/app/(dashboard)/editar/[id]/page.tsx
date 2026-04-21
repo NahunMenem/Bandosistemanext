@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Edit, ArrowLeft, Save } from 'lucide-react';
+import { Edit, ArrowLeft, Save, AlertCircle } from 'lucide-react';
 
 export default function EditarPage() {
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
   const [form, setForm] = useState({
     nombre: '', domicilio: '', localidad: '', documento: '',
     telefono: '', ingresos: '', lugar_trabajo: '', monto_autorizado: '',
@@ -48,13 +49,26 @@ export default function EditarPage() {
   }, [id]);
 
   const handleSave = async () => {
+    setError('');
+    if (!form.nombre.trim() || !form.documento.trim()) {
+      setError('Completa nombre y documento del cliente.');
+      return;
+    }
+
     setSaving(true);
-    await fetch(`/api/clientes/${id}`, {
+    const res = await fetch(`/api/clientes/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...form, garante }),
     });
+    const data = await res.json().catch(() => null);
     setSaving(false);
+
+    if (!res.ok) {
+      setError(data?.error || 'No se pudo guardar el cliente. Revisa los datos e intenta nuevamente.');
+      return;
+    }
+
     router.push('/clientes');
   };
 
@@ -73,12 +87,23 @@ export default function EditarPage() {
       </div>
 
       <div className="bg-gray-800 rounded-xl p-6 space-y-6">
+        <div className="rounded-lg border border-blue-500/30 bg-blue-500/10 px-4 py-3 text-sm text-blue-100">
+          Campos obligatorios: nombre y documento del cliente. El documento no puede repetirse.
+        </div>
+
+        {error && (
+          <div className="flex items-start gap-2 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+            <AlertCircle size={18} className="mt-0.5 shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+
         <div>
           <h3 className="text-sm font-medium text-blue-400 mb-4 uppercase tracking-wide">Datos del cliente</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {[
               { key: 'nombre', label: 'Nombre *', type: 'text' },
-              { key: 'documento', label: 'Documento', type: 'text' },
+              { key: 'documento', label: 'Documento *', type: 'text' },
               { key: 'domicilio', label: 'Domicilio', type: 'text' },
               { key: 'localidad', label: 'Localidad', type: 'text' },
               { key: 'telefono', label: 'Teléfono', type: 'text' },
@@ -90,6 +115,7 @@ export default function EditarPage() {
                 <label className="block text-xs text-gray-400 mb-1">{label}</label>
                 <input
                   type={type}
+                  required={key === 'nombre' || key === 'documento'}
                   value={form[key as keyof typeof form]}
                   onChange={(e) => setForm({ ...form, [key]: e.target.value })}
                   className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
@@ -131,7 +157,7 @@ export default function EditarPage() {
         </button>
         <button
           onClick={handleSave}
-          disabled={saving}
+          disabled={saving || !form.nombre.trim() || !form.documento.trim()}
           className="flex items-center gap-2 px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg transition-colors"
         >
           <Save size={16} />

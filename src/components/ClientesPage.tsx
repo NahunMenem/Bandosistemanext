@@ -1,13 +1,39 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { Fragment, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Users, Plus, Search, Edit, Trash2, X, ChevronDown, ChevronUp } from 'lucide-react';
+import {
+  Users,
+  Plus,
+  Search,
+  Edit,
+  Trash2,
+  X,
+  ChevronDown,
+  ChevronUp,
+  AlertCircle,
+  User,
+  CreditCard,
+  Home,
+  MapPin,
+  Phone,
+  Wallet,
+  Briefcase,
+  BadgeDollarSign,
+  Shield,
+  Save,
+} from 'lucide-react';
 import type { Cliente } from '@/types';
 
 const emptyCliente = {
-  nombre: '', domicilio: '', localidad: '', documento: '',
-  telefono: '', ingresos: '', lugar_trabajo: '', monto_autorizado: '',
+  nombre: '',
+  domicilio: '',
+  localidad: '',
+  documento: '',
+  telefono: '',
+  ingresos: '',
+  lugar_trabajo: '',
+  monto_autorizado: '',
 };
 
 export default function ClientesPage() {
@@ -21,6 +47,7 @@ export default function ClientesPage() {
   const [garante, setGarante] = useState({ ...emptyCliente });
   const [saving, setSaving] = useState(false);
   const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [error, setError] = useState('');
 
   const fetchClientes = useCallback(async () => {
     const res = await fetch('/api/clientes');
@@ -29,7 +56,9 @@ export default function ClientesPage() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchClientes(); }, [fetchClientes]);
+  useEffect(() => {
+    fetchClientes();
+  }, [fetchClientes]);
 
   const filtered = clientes.filter(
     (c) =>
@@ -39,17 +68,30 @@ export default function ClientesPage() {
   );
 
   const handleSave = async () => {
-    if (!form.nombre.trim()) return;
+    setError('');
+    if (!form.nombre.trim() || !form.documento.trim()) {
+      setError('Completa nombre y documento del cliente.');
+      return;
+    }
+
     setSaving(true);
-    await fetch('/api/clientes', {
+    const res = await fetch('/api/clientes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...form, garante }),
     });
+    const data = await res.json().catch(() => null);
     setSaving(false);
+
+    if (!res.ok) {
+      setError(data?.error || 'No se pudo guardar el cliente. Revisa los datos e intenta nuevamente.');
+      return;
+    }
+
     setShowModal(false);
     setForm({ ...emptyCliente });
     setGarante({ ...emptyCliente });
+    setError('');
     fetchClientes();
   };
 
@@ -62,6 +104,27 @@ export default function ClientesPage() {
   const fmtPeso = (n: number) =>
     n.toLocaleString('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 2 });
 
+  const clienteFields = [
+    { key: 'nombre', label: 'Nombre *', type: 'text', icon: User },
+    { key: 'documento', label: 'Documento *', type: 'text', icon: CreditCard },
+    { key: 'telefono', label: 'Telefono', type: 'text', icon: Phone },
+    { key: 'localidad', label: 'Localidad', type: 'text', icon: MapPin },
+    { key: 'domicilio', label: 'Domicilio', type: 'text', icon: Home },
+    { key: 'lugar_trabajo', label: 'Lugar de trabajo', type: 'text', icon: Briefcase },
+    { key: 'ingresos', label: 'Ingresos', type: 'number', icon: Wallet },
+    { key: 'monto_autorizado', label: 'Monto autorizado', type: 'number', icon: BadgeDollarSign },
+  ];
+
+  const garanteFields = [
+    { key: 'nombre', label: 'Nombre', type: 'text', icon: User },
+    { key: 'documento', label: 'Documento', type: 'text', icon: CreditCard },
+    { key: 'telefono', label: 'Telefono', type: 'text', icon: Phone },
+    { key: 'localidad', label: 'Localidad', type: 'text', icon: MapPin },
+    { key: 'domicilio', label: 'Domicilio', type: 'text', icon: Home },
+    { key: 'lugar_trabajo', label: 'Lugar de trabajo', type: 'text', icon: Briefcase },
+    { key: 'ingresos', label: 'Ingresos', type: 'number', icon: Wallet },
+  ];
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -73,7 +136,10 @@ export default function ClientesPage() {
           <p className="text-gray-400 mt-1">{clientes.length} clientes registrados</p>
         </div>
         <button
-          onClick={() => setShowModal(true)}
+          onClick={() => {
+            setError('');
+            setShowModal(true);
+          }}
           className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors self-start sm:self-auto"
         >
           <Plus size={16} />
@@ -87,7 +153,7 @@ export default function ClientesPage() {
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar por nombre, documento o teléfono..."
+          placeholder="Buscar por nombre, documento o telefono..."
           className="w-full bg-gray-800 border border-gray-700 rounded-lg pl-9 pr-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
         />
       </div>
@@ -105,7 +171,7 @@ export default function ClientesPage() {
               <tr className="bg-gray-700 text-gray-300 text-sm">
                 <th className="text-left px-4 py-3">Nombre</th>
                 <th className="text-left px-4 py-3 hidden sm:table-cell">Documento</th>
-                <th className="text-left px-4 py-3 hidden md:table-cell">Teléfono</th>
+                <th className="text-left px-4 py-3 hidden md:table-cell">Telefono</th>
                 <th className="text-left px-4 py-3 hidden lg:table-cell">Localidad</th>
                 <th className="text-right px-4 py-3 hidden md:table-cell">Autorizado</th>
                 <th className="text-right px-4 py-3">Saldo</th>
@@ -114,15 +180,18 @@ export default function ClientesPage() {
             </thead>
             <tbody>
               {filtered.map((c, idx) => (
-                <>
+                <Fragment key={c.id}>
                   <tr
-                    key={c.id}
                     className={`border-t border-gray-700 ${idx % 2 === 0 ? '' : 'bg-gray-750'} hover:bg-gray-700 transition-colors cursor-pointer`}
                     onClick={() => setExpandedId(expandedId === c.id ? null : c.id)}
                   >
                     <td className="px-4 py-3 font-medium text-white">
                       <div className="flex items-center gap-2">
-                        {expandedId === c.id ? <ChevronUp size={14} className="text-gray-400" /> : <ChevronDown size={14} className="text-gray-400" />}
+                        {expandedId === c.id ? (
+                          <ChevronUp size={14} className="text-gray-400" />
+                        ) : (
+                          <ChevronDown size={14} className="text-gray-400" />
+                        )}
                         {c.nombre}
                       </div>
                     </td>
@@ -155,7 +224,7 @@ export default function ClientesPage() {
                     </td>
                   </tr>
                   {expandedId === c.id && (
-                    <tr key={`${c.id}-detail`} className="border-t border-gray-700 bg-gray-750">
+                    <tr className="border-t border-gray-700 bg-gray-750">
                       <td colSpan={7} className="px-4 py-4">
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                           <div>
@@ -173,14 +242,16 @@ export default function ClientesPage() {
                           {c.garante && (
                             <div>
                               <p className="text-gray-500">Garante</p>
-                              <p className="text-gray-200">{c.garante.nombre || '-'} {c.garante.telefono ? `• ${c.garante.telefono}` : ''}</p>
+                              <p className="text-gray-200">
+                                {c.garante.nombre || '-'} {c.garante.telefono ? `- ${c.garante.telefono}` : ''}
+                              </p>
                             </div>
                           )}
                         </div>
                       </td>
                     </tr>
                   )}
-                </>
+                </Fragment>
               ))}
             </tbody>
           </table>
@@ -189,74 +260,119 @@ export default function ClientesPage() {
 
       {showModal && (
         <div className="fixed inset-0 bg-black/60 flex items-start justify-center z-50 p-4 overflow-y-auto">
-          <div className="bg-gray-800 rounded-2xl w-full max-w-2xl my-8">
-            <div className="flex items-center justify-between p-6 border-b border-gray-700">
-              <h2 className="text-lg font-semibold text-white">Nuevo Cliente</h2>
-              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-white"><X size={20} /></button>
+          <div className="bg-gray-800 rounded-2xl w-full max-w-5xl my-8 border border-gray-700 shadow-2xl">
+            <div className="flex items-start justify-between gap-4 p-6 border-b border-gray-700">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-blue-600/15 text-blue-300">
+                  <User size={22} />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-white">Nuevo cliente</h2>
+                  <p className="text-sm text-gray-400">Carga los datos principales y, si corresponde, los del garante.</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowModal(false)}
+                className="text-gray-400 hover:text-white p-1 transition-colors"
+                title="Cerrar"
+              >
+                <X size={22} />
+              </button>
             </div>
+
             <div className="p-6 space-y-6">
-              <div>
-                <h3 className="text-sm font-medium text-blue-400 mb-3 uppercase tracking-wide">Datos del cliente</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {[
-                    { key: 'nombre', label: 'Nombre *', type: 'text' },
-                    { key: 'documento', label: 'Documento', type: 'text' },
-                    { key: 'domicilio', label: 'Domicilio', type: 'text' },
-                    { key: 'localidad', label: 'Localidad', type: 'text' },
-                    { key: 'telefono', label: 'Teléfono', type: 'text' },
-                    { key: 'ingresos', label: 'Ingresos', type: 'number' },
-                    { key: 'lugar_trabajo', label: 'Lugar de trabajo', type: 'text' },
-                    { key: 'monto_autorizado', label: 'Monto autorizado', type: 'number' },
-                  ].map(({ key, label, type }) => (
-                    <div key={key}>
-                      <label className="block text-xs text-gray-400 mb-1">{label}</label>
-                      <input
-                        type={type}
-                        value={form[key as keyof typeof form]}
-                        onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
-                      />
-                    </div>
-                  ))}
+              <div className="flex items-start gap-3 rounded-lg border border-blue-500/30 bg-blue-500/10 px-4 py-3 text-sm text-blue-100">
+                <AlertCircle size={18} className="mt-0.5 shrink-0" />
+                <div>
+                  <p className="font-medium text-blue-50">Campos obligatorios: Nombre y Documento del cliente.</p>
+                  <p className="text-blue-100/80">El documento identifica al cliente y no puede repetirse.</p>
                 </div>
               </div>
 
-              <div>
-                <h3 className="text-sm font-medium text-purple-400 mb-3 uppercase tracking-wide">Datos del garante</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {[
-                    { key: 'nombre', label: 'Nombre', type: 'text' },
-                    { key: 'documento', label: 'Documento', type: 'text' },
-                    { key: 'domicilio', label: 'Domicilio', type: 'text' },
-                    { key: 'localidad', label: 'Localidad', type: 'text' },
-                    { key: 'telefono', label: 'Teléfono', type: 'text' },
-                    { key: 'ingresos', label: 'Ingresos', type: 'number' },
-                    { key: 'lugar_trabajo', label: 'Lugar de trabajo', type: 'text' },
-                  ].map(({ key, label, type }) => (
-                    <div key={key}>
-                      <label className="block text-xs text-gray-400 mb-1">{label}</label>
-                      <input
-                        type={type}
-                        value={garante[key as keyof typeof garante]}
-                        onChange={(e) => setGarante({ ...garante, [key]: e.target.value })}
-                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
-                      />
-                    </div>
-                  ))}
+              {error && (
+                <div className="flex items-start gap-2 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+                  <AlertCircle size={18} className="mt-0.5 shrink-0" />
+                  <span>{error}</span>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] gap-6">
+                <section className="rounded-xl border border-gray-700 bg-gray-900/40 p-5">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Users size={18} className="text-blue-400" />
+                    <h3 className="text-sm font-medium text-blue-300 uppercase tracking-wide">Datos del cliente</h3>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {clienteFields.map(({ key, label, type, icon: Icon }) => (
+                      <div key={key}>
+                        <label className="block text-xs text-gray-400 mb-1">{label}</label>
+                        <div className="relative">
+                          <Icon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+                          <input
+                            type={type}
+                            required={key === 'nombre' || key === 'documento'}
+                            value={form[key as keyof typeof form]}
+                            onChange={(e) => setForm({ ...form, [key]: e.target.value })}
+                            className="w-full bg-gray-700 border border-gray-600 rounded-lg pl-9 pr-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+
+                <section className="rounded-xl border border-gray-700 bg-gray-900/40 p-5">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Shield size={18} className="text-purple-400" />
+                    <h3 className="text-sm font-medium text-purple-300 uppercase tracking-wide">Datos del garante</h3>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
+                    {garanteFields.map(({ key, label, type, icon: Icon }) => (
+                      <div key={key}>
+                        <label className="block text-xs text-gray-400 mb-1">{label}</label>
+                        <div className="relative">
+                          <Icon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+                          <input
+                            type={type}
+                            value={garante[key as keyof typeof garante]}
+                            onChange={(e) => setGarante({ ...garante, [key]: e.target.value })}
+                            className="w-full bg-gray-700 border border-gray-600 rounded-lg pl-9 pr-3 py-2 text-white text-sm focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-gray-400">
+                <div className="rounded-lg border border-gray-700 bg-gray-900/40 px-3 py-2">
+                  <span className="text-white">Nombre</span> y <span className="text-white">Documento</span> son requeridos.
+                </div>
+                <div className="rounded-lg border border-gray-700 bg-gray-900/40 px-3 py-2">
+                  El <span className="text-white">documento</span> debe ser unico.
+                </div>
+                <div className="rounded-lg border border-gray-700 bg-gray-900/40 px-3 py-2">
+                  Los datos del <span className="text-white">garante</span> son opcionales.
                 </div>
               </div>
             </div>
-            <div className="flex justify-end gap-3 p-6 border-t border-gray-700">
-              <button onClick={() => setShowModal(false)} className="px-4 py-2 text-gray-400 hover:text-white transition-colors">
-                Cancelar
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={saving || !form.nombre.trim()}
-                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg transition-colors"
-              >
-                {saving ? 'Guardando...' : 'Guardar'}
-              </button>
+
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-6 border-t border-gray-700 bg-gray-900/30">
+              <p className="text-xs text-gray-500">Los campos marcados con * son obligatorios.</p>
+              <div className="flex justify-end gap-3">
+                <button onClick={() => setShowModal(false)} className="px-4 py-2 text-gray-400 hover:text-white transition-colors">
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleSave}
+                  disabled={saving || !form.nombre.trim() || !form.documento.trim()}
+                  className="flex items-center gap-2 px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg transition-colors"
+                >
+                  <Save size={16} />
+                  {saving ? 'Guardando...' : 'Guardar'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -265,11 +381,15 @@ export default function ClientesPage() {
       {deleteId && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
           <div className="bg-gray-800 rounded-xl p-6 max-w-sm w-full border border-gray-700">
-            <h3 className="text-lg font-semibold text-white mb-2">Confirmar eliminación</h3>
-            <p className="text-gray-400 mb-6">¿Estás seguro? Se eliminarán también todas las ventas y pagos del cliente.</p>
+            <h3 className="text-lg font-semibold text-white mb-2">Confirmar eliminacion</h3>
+            <p className="text-gray-400 mb-6">Estas seguro? Se eliminaran tambien todas las ventas y pagos del cliente.</p>
             <div className="flex justify-end gap-3">
-              <button onClick={() => setDeleteId(null)} className="px-4 py-2 text-gray-400 hover:text-white">Cancelar</button>
-              <button onClick={() => handleDelete(deleteId)} className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg">Eliminar</button>
+              <button onClick={() => setDeleteId(null)} className="px-4 py-2 text-gray-400 hover:text-white">
+                Cancelar
+              </button>
+              <button onClick={() => handleDelete(deleteId)} className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg">
+                Eliminar
+              </button>
             </div>
           </div>
         </div>
