@@ -259,15 +259,15 @@ export default function ClientesPage() {
       )}
 
       {showModal && (
-        <div className="fixed inset-0 bg-black/60 flex items-start justify-center z-50 p-4 overflow-y-auto">
-          <div className="bg-gray-800 rounded-2xl w-full max-w-5xl my-8 border border-gray-700 shadow-2xl">
-            <div className="flex items-start justify-between gap-4 p-6 border-b border-gray-700">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-3">
+          <div className="bg-gray-800 rounded-2xl w-full max-w-5xl max-h-[calc(100vh-1.5rem)] border border-gray-700 shadow-2xl flex flex-col overflow-hidden">
+            <div className="flex items-start justify-between gap-4 px-5 py-4 border-b border-gray-700 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-blue-600/15 text-blue-300">
-                  <User size={22} />
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600/15 text-blue-300">
+                  <User size={20} />
                 </div>
                 <div>
-                  <h2 className="text-xl font-semibold text-white">Nuevo cliente</h2>
+                  <h2 className="text-lg font-semibold text-white">Nuevo cliente</h2>
                   <p className="text-sm text-gray-400">Carga los datos principales y, si corresponde, los del garante.</p>
                 </div>
               </div>
@@ -280,12 +280,12 @@ export default function ClientesPage() {
               </button>
             </div>
 
-            <div className="p-6 space-y-6">
-              <div className="flex items-start gap-3 rounded-lg border border-blue-500/30 bg-blue-500/10 px-4 py-3 text-sm text-blue-100">
+            <div className="px-5 py-4 space-y-4 overflow-y-auto">
+              <div className="flex items-start gap-3 rounded-lg border border-blue-500/30 bg-blue-500/10 px-4 py-2.5 text-sm text-blue-100">
                 <AlertCircle size={18} className="mt-0.5 shrink-0" />
                 <div>
                   <p className="font-medium text-blue-50">Campos obligatorios: Nombre y Documento del cliente.</p>
-                  <p className="text-blue-100/80">El documento identifica al cliente y no puede repetirse.</p>
+                  <p className="text-blue-100/80">El documento no puede repetirse.</p>
                 </div>
               </div>
 
@@ -296,13 +296,13 @@ export default function ClientesPage() {
                 </div>
               )}
 
-              <div className="grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] gap-6">
-                <section className="rounded-xl border border-gray-700 bg-gray-900/40 p-5">
-                  <div className="flex items-center gap-2 mb-4">
+              <div className="grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] gap-4">
+                <section className="rounded-xl border border-gray-700 bg-gray-900/40 p-4">
+                  <div className="flex items-center gap-2 mb-3">
                     <Users size={18} className="text-blue-400" />
                     <h3 className="text-sm font-medium text-blue-300 uppercase tracking-wide">Datos del cliente</h3>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {clienteFields.map(({ key, label, type, icon: Icon }) => (
                       <div key={key}>
                         <label className="block text-xs text-gray-400 mb-1">{label}</label>
@@ -321,12 +321,12 @@ export default function ClientesPage() {
                   </div>
                 </section>
 
-                <section className="rounded-xl border border-gray-700 bg-gray-900/40 p-5">
-                  <div className="flex items-center gap-2 mb-4">
+                <section className="rounded-xl border border-gray-700 bg-gray-900/40 p-4">
+                  <div className="flex items-center gap-2 mb-3">
                     <Shield size={18} className="text-purple-400" />
                     <h3 className="text-sm font-medium text-purple-300 uppercase tracking-wide">Datos del garante</h3>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3">
                     {garanteFields.map(({ key, label, type, icon: Icon }) => (
                       <div key={key}>
                         <label className="block text-xs text-gray-400 mb-1">{label}</label>
@@ -345,7 +345,7 @@ export default function ClientesPage() {
                 </section>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-gray-400">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-gray-400">
                 <div className="rounded-lg border border-gray-700 bg-gray-900/40 px-3 py-2">
                   <span className="text-white">Nombre</span> y <span className="text-white">Documento</span> son requeridos.
                 </div>
@@ -358,7 +358,7 @@ export default function ClientesPage() {
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-6 border-t border-gray-700 bg-gray-900/30">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-5 py-4 border-t border-gray-700 bg-gray-900/30 shrink-0">
               <p className="text-xs text-gray-500">Los campos marcados con * son obligatorios.</p>
               <div className="flex justify-end gap-3">
                 <button onClick={() => setShowModal(false)} className="px-4 py-2 text-gray-400 hover:text-white transition-colors">
