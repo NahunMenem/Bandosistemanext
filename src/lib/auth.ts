@@ -49,7 +49,7 @@ export const authOptions: NextAuthOptions = {
         let legacyUsers: LegacyUserRow[] = [];
         try {
           legacyUsers = await prisma.$queryRawUnsafe<LegacyUserRow[]>(
-            'select id, username, password, role from usuarios where lower(username) = lower($1) limit 1',
+            'select id, username, password, role from usuarios_bunker where lower(username) = lower($1) limit 1',
             username,
           );
           console.log('[auth] usuarios:lookup', { found: legacyUsers.length > 0, username });
